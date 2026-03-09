@@ -1,0 +1,239 @@
+@import 'tailwindcss';
+@import 'tw-animate-css';
+
+@custom-variant dark (&:is(.dark *));
+
+:root {
+  /* ESPRIT Theme: White, Black, Red */
+  --background: #ffffff;
+  --foreground: #000000;
+  --card: #ffffff;
+  --card-foreground: #000000;
+  --popover: #ffffff;
+  --popover-foreground: #000000;
+  --primary: #000000;
+  --primary-foreground: #ffffff;
+  --secondary: #f3f4f6;
+  --secondary-foreground: #000000;
+  --muted: #e5e7eb;
+  --muted-foreground: #6b7280;
+  --accent: #e30613;
+  --accent-foreground: #ffffff;
+  --destructive: #e30613;
+  --destructive-foreground: #ffffff;
+  --border: #d9dde3;
+  --input: #ffffff;
+  --ring: #e30613;
+  --chart-1: #e30613;
+  --chart-2: #111111;
+  --chart-3: #9ca3af;
+  --chart-4: #e30613;
+  --chart-5: #6b7280;
+  --radius: 0.625rem;
+  --sidebar: #000000;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #e30613;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #9ca3af;
+  --sidebar-accent-foreground: #111111;
+  --sidebar-border: #1f2937;
+  --sidebar-ring: #e30613;
+}
+
+.dark {
+  /* ESPRIT Dark Theme */
+  --background: #0a0a0a;
+  --foreground: #ffffff;
+  --card: #1a1a1a;
+  --card-foreground: #ffffff;
+  --popover: #1a1a1a;
+  --popover-foreground: #ffffff;
+  --primary: #ffffff;
+  --primary-foreground: #000000;
+  --secondary: #1a1a1a;
+  --secondary-foreground: #ffffff;
+  --muted: #1f2937;
+  --muted-foreground: #9ca3af;
+  --accent: #e30613;
+  --accent-foreground: #ffffff;
+  --destructive: #e30613;
+  --destructive-foreground: #ffffff;
+  --border: #374151;
+  --input: #111827;
+  --ring: #e30613;
+  --chart-1: #e30613;
+  --chart-2: #ffffff;
+  --chart-3: #999999;
+  --chart-4: #e30613;
+  --chart-5: #666666;
+  --sidebar: #0a0a0a;
+  --sidebar-foreground: #ffffff;
+  --sidebar-primary: #e30613;
+  --sidebar-primary-foreground: #ffffff;
+  --sidebar-accent: #333333;
+  --sidebar-accent-foreground: #ffffff;
+  --sidebar-border: #333333;
+  --sidebar-ring: #e30613;
+}
+
+@theme inline {
+  --font-sans: 'Geist', 'Geist Fallback';
+  --font-mono: 'Geist Mono', 'Geist Mono Fallback';
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 4px);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+
+  html {
+    color-scheme: light;
+  }
+
+  html.dark {
+    color-scheme: dark;
+  }
+}
+
+/* ESPRIT Modern Styles */
+@layer components {
+  /* Smooth transitions */
+  * {
+    @apply transition-all duration-200 ease-in-out;
+  }
+
+  /* Card hover effects */
+  .card-hover {
+    @apply hover:shadow-xl hover:scale-105 transition-all duration-300;
+  }
+
+  /* Button hover glow */
+  .btn-red {
+    @apply bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg shadow-lg hover:shadow-red-600/30;
+  }
+
+  .btn-black {
+    @apply bg-black hover:bg-gray-900 text-white font-bold rounded-lg shadow-lg;
+  }
+
+  /* Modern gradient text */
+  .gradient-text {
+    @apply bg-gradient-to-r from-black to-red-600 bg-clip-text text-transparent;
+  }
+
+  /* Smooth animations */
+  @keyframes slideInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes slideInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeIn {
+    from {
+      opacity: 0;
+    }
+    to {
+      opacity: 1;
+    }
+  }
+
+  .animate-slideup {
+    animation: slideInUp 0.5s ease-out;
+  }
+
+  .animate-slidedown {
+    animation: slideInDown 0.5s ease-out;
+  }
+
+  .animate-fadein {
+    animation: fadeIn 0.5s ease-out;
+  }
+
+  /* Input focus effects */
+  input:focus-visible {
+    @apply ring-2 ring-red-600 border-red-600;
+  }
+
+  /* Selection colors */
+  ::selection {
+    @apply bg-red-600 text-white;
+  }
+
+  /* Scrollbar styling */
+  ::-webkit-scrollbar {
+    @apply w-2;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-red-600 rounded hover:bg-red-700;
+  }
+
+  /* Modern form elements */
+  input, textarea, select {
+    @apply transition-all duration-200;
+  }
+
+  /* Link styling */
+  a {
+    @apply hover:text-red-600 transition-colors duration-200;
+  }
+}

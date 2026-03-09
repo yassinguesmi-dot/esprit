@@ -1,0 +1,133 @@
+version: '3.8'
+
+services:
+  # PostgreSQL Database
+  db:
+    image: postgres:14-alpine
+    container_name: esprit-activities-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: esprit_activities
+      POSTGRES_USER: esprit_user
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-change_this_password}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - "5432:5432"
+    volumes:
+      # Mount SQL scripts for initialization
+      - ./scripts:/docker-entrypoint-initdb.d:ro
+      # Persist database data
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - esprit-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U esprit_user -d esprit_activities"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Spring Boot Backend (Java)
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    container_name: esprit-activities-backend
+    restart: unless-stopped
+    environment:
+      SPRING_PROFILES_ACTIVE: docker
+      SERVER_PORT: 8080
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/esprit_activities
+      SPRING_DATASOURCE_USERNAME: esprit_user
+      SPRING_DATASOURCE_PASSWORD: ${DB_PASSWORD:-change_this_password}
+      JWT_SECRET: ${JWT_SECRET:-please_change_this_to_a_secure_random_string_minimum_32_chars}
+      JWT_EXPIRES_IN: 7d
+      APP_NAME: ESPRIT Activities Platform
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+      SMTP_FROM: ${SMTP_FROM:-ESPRIT Activities <noreply@esprit.tn>}
+      ENABLE_NOTIFICATIONS: ${ENABLE_NOTIFICATIONS:-true}
+      ENABLE_EMAIL_NOTIFICATIONS: ${ENABLE_EMAIL_NOTIFICATIONS:-false}
+      LOG_LEVEL: ${LOG_LEVEL:-info}
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+    networks:
+      - esprit-network
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  # Angular Frontend
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+    container_name: esprit-activities-frontend
+    restart: unless-stopped
+    environment:
+      API_BASE_URL: http://backend:8080/api
+    ports:
+      - "4200:80"
+    depends_on:
+      backend:
+        condition: service_healthy
+    networks:
+      - esprit-network
+
+  # Redis (Optional - for caching and sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: esprit-activities-redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - esprit-network
+    command: redis-server --appendonly yes --maxmemory 256mb --maxmemory-policy allkeys-lru
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # PgAdmin (Optional - for database management)
+  pgadmin:
+    image: dpage/pgadmin4:latest
+    container_name: esprit-activities-pgadmin
+    restart: unless-stopped
+    environment:
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_EMAIL:-admin@esprit.tn}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_PASSWORD:-admin}
+      PGADMIN_CONFIG_SERVER_MODE: 'False'
+    ports:
+      - "5050:80"
+    volumes:
+      - pgadmin_data:/var/lib/pgadmin
+    depends_on:
+      - db
+    networks:
+      - esprit-network
+    profiles:
+      - development
+
+volumes:
+  postgres_data:
+    driver: local
+  redis_data:
+    driver: local
+  pgadmin_data:
+    driver: local
+
+networks:
+  esprit-network:
+    driver: bridge
