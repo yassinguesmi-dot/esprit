@@ -83,7 +83,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Get validated activities for the academic year
+    // Get validated/approved activities for the academic year
     const activities = await query(
       `SELECT 
         id,
@@ -94,7 +94,7 @@ export async function POST(request: NextRequest) {
         EXTRACT(EPOCH FROM (date_fin - date_debut)) / 3600 as hours
       FROM activites
       WHERE utilisateur_id = $1
-        AND statut = 'validated'
+        AND statut IN ('validated', 'approved')
         AND EXTRACT(YEAR FROM date_debut) = CAST($2 AS INTEGER)
       ORDER BY date_debut DESC`,
       [decoded.userId, academicYearValue]

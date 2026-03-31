@@ -10,25 +10,17 @@ interface EspritLogoProps {
 
 export function EspritLogo({ className = '', showTagline = true, compact = false, theme = 'auto' }: EspritLogoProps) {
   const dimensions = compact
-    ? { width: 220, height: 72, className: 'h-12 w-auto max-w-[210px]' }
-    : { width: 380, height: 116, className: 'h-24 w-auto max-w-[380px]' }
+    ? { width: 48, height: 48, className: 'h-12 w-12' }
+    : { width: 96, height: 96, className: 'h-24 w-24' }
 
   const wrapperClass = compact
-    ? 'inline-flex min-w-0 items-center rounded-xl px-1 py-1'
-    : 'inline-flex min-w-0 items-center rounded-2xl px-2 py-2'
-
-  const lightWrapper = compact
-    ? `${wrapperClass} bg-white shadow-[0_14px_34px_-18px_rgba(0,0,0,0.32)] ring-1 ring-black/5`
-    : `${wrapperClass} bg-white/98 shadow-[0_18px_38px_-18px_rgba(0,0,0,0.22)] ring-1 ring-black/5`
-
-  const darkWrapper = compact
-    ? `${wrapperClass} bg-transparent`
-    : `${wrapperClass} bg-transparent`
+    ? 'inline-flex min-w-0 items-center overflow-hidden rounded-xl'
+    : 'inline-flex min-w-0 items-center overflow-hidden rounded-2xl'
 
   const lightLogo = (
-    <span className={lightWrapper}>
+    <span className={wrapperClass}>
       <Image
-        src="/esprit-logo.svg"
+        src="/logolight.png"
         alt="ESPRIT"
         width={dimensions.width}
         height={dimensions.height}
@@ -39,9 +31,9 @@ export function EspritLogo({ className = '', showTagline = true, compact = false
   )
 
   const darkLogo = (
-    <span className={darkWrapper}>
+    <span className={wrapperClass}>
       <Image
-        src="/esprit-logo-dark.svg"
+        src="/logonight.png"
         alt="ESPRIT"
         width={dimensions.width}
         height={dimensions.height}

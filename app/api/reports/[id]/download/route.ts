@@ -63,7 +63,7 @@ export async function GET(
       [decoded.userId]
     );
 
-    // Get activities for this report
+    // Get activities for this report (validated or fully approved)
     const activities = await query(
       `SELECT 
         type_activite as type,
@@ -72,7 +72,7 @@ export async function GET(
         description
       FROM activites
       WHERE utilisateur_id = $1
-        AND statut = 'validated'
+        AND statut IN ('validated', 'approved')
         AND EXTRACT(YEAR FROM date_debut) = CAST($2 AS INTEGER)
       ORDER BY date_debut DESC`,
       [decoded.userId, report.academicYear]

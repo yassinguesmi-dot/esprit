@@ -180,7 +180,7 @@ export default function ReportsPage() {
                   disabled={isGenerating}
                   className="w-full px-4 py-2 rounded-lg border border-border bg-background text-foreground focus:outline-none focus:ring-2 focus:ring-primary"
                 >
-                  {[2023, 2024, 2025].map(year => (
+                  {[2023, 2024, 2025, 2026].map(year => (
                     <option key={year} value={year.toString()}>
                       {year}-{year + 1}
                     </option>

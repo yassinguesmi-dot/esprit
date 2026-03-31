@@ -178,7 +178,7 @@ export default function Home() {
             </div>
           </div>
           <div className="border-t border-gray-800 pt-8 text-center text-sm text-gray-500">
-            <p>© 2024 ESPRIT - Honoris United Universities. Tous droits réservés.</p>
+            <p>© 2026 ESPRIT - Honoris United Universities. Tous droits réservés.</p>
           </div>
         </div>
       </footer>

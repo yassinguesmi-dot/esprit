@@ -222,7 +222,7 @@ export default function RegisterPage() {
 
         {/* Footer */}
         <p className="text-center text-xs text-gray-500 mt-8 font-medium dark:text-gray-400">
-          © 2024 ESPRIT. Tous droits réservés.
+          © 2026 ESPRIT. Tous droits réservés.
         </p>
       </div>
     </div>

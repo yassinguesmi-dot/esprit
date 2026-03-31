@@ -15,11 +15,21 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    if (isDemoUser(decoded.userId)) {
-      return NextResponse.json({ activities: listDemoValidations(decoded.userId) });
+    const isChef = decoded.role === 'chef_departement';
+    const isAdmin = decoded.role === 'admin' || decoded.role === 'super_admin';
+
+    if (!isChef && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
     }
 
-    // Get activities pending validation for this user's department
+    if (isDemoUser(decoded.userId)) {
+      return NextResponse.json({ activities: listDemoValidations(decoded.userId, decoded.role) });
+    }
+
+    const expectedStatus = isChef ? 'submitted' : 'validated';
+    const validationLevel = isChef ? 1 : 2;
+
+    // Get activities pending validation for this user role
     const validations = await query(
       `SELECT 
         a.id as activityId,
@@ -38,11 +48,11 @@ export async function GET(request: NextRequest) {
         v.date_validation as validatedAt
       FROM activites a
       JOIN utilisateurs u ON a.utilisateur_id = u.id
-      LEFT JOIN validations v ON a.id = v.activite_id AND v.niveau = 1
-      WHERE a.statut = 'submitted'
+      LEFT JOIN validations v ON a.id = v.activite_id AND v.niveau = $2
+      WHERE a.statut = $3
         AND u.id != $1
       ORDER BY a.date_creation DESC`,
-      [decoded.userId]
+      [decoded.userId, validationLevel, expectedStatus]
     );
 
     return NextResponse.json({
@@ -91,6 +101,13 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    const isChef = decoded.role === 'chef_departement';
+    const isAdmin = decoded.role === 'admin' || decoded.role === 'super_admin';
+
+    if (!isChef && !isAdmin) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 });
+    }
+
     if (isDemoUser(decoded.userId)) {
       const validation = saveDemoValidation(decoded.userId, activityId, status, comment);
 
@@ -109,7 +126,7 @@ export async function POST(request: NextRequest) {
 
     // Get activity
     const activity = await queryOne(
-      'SELECT id, utilisateur_id FROM activites WHERE id = $1',
+      'SELECT id, utilisateur_id, statut FROM activites WHERE id = $1',
       [activityId]
     );
 
@@ -120,17 +137,36 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    if (activity.utilisateur_id === decoded.userId) {
+      return NextResponse.json(
+        { error: 'Cannot validate your own activity' },
+        { status: 403 }
+      );
+    }
+
+    const validationLevel = isChef ? 1 : 2;
+    const expectedCurrentStatus = isChef ? 'submitted' : 'validated';
+
+    if (activity.statut !== expectedCurrentStatus) {
+      return NextResponse.json(
+        { error: `Activity must be '${expectedCurrentStatus}' to validate at this level` },
+        { status: 400 }
+      );
+    }
+
     // Create validation record
     const validation = await queryOne(
       `INSERT INTO validations 
       (activite_id, utilisateur_validateur_id, statut, commentaire, niveau, date_validation)
-      VALUES ($1, $2, $3, $4, 1, NOW())
+      VALUES ($1, $2, $3, $4, $5, NOW())
       RETURNING id, statut as status, commentaire as comment, date_validation as validatedAt`,
-      [activityId, decoded.userId, status, comment || null]
+      [activityId, decoded.userId, status, comment || null, validationLevel]
     );
 
     // Update activity status
-    const newActivityStatus = status === 'approved' ? 'validated' : 'rejected';
+    const newActivityStatus = status === 'approved'
+      ? (isChef ? 'validated' : 'approved')
+      : 'rejected';
     await execute(
       'UPDATE activites SET statut = $1, date_modification = NOW() WHERE id = $2',
       [newActivityStatus, activityId]
@@ -140,19 +176,32 @@ export async function POST(request: NextRequest) {
     await execute(
       `INSERT INTO audit_logs 
       (utilisateur_id, action, table_affectee, id_enregistrement, ancienne_valeur, nouvelle_valeur, date_action)
-      VALUES ($1, 'VALIDATION', 'activites', $2, 'submitted', $3, NOW())`,
-      [decoded.userId, activityId, newActivityStatus]
+      VALUES ($1, $2, 'activites', $3, $4, $5, NOW())`,
+      [
+        decoded.userId,
+        validationLevel === 1 ? 'VALIDATION_N1' : 'VALIDATION_N2',
+        activityId,
+        activity.statut,
+        newActivityStatus,
+      ]
     );
 
     // Create notification for activity owner
+    const notificationTitle = status === 'approved'
+      ? (validationLevel === 1 ? 'Activité Validée' : 'Activité Approuvée')
+      : 'Activité Rejetée';
+    const notificationMessage = status === 'approved'
+      ? (validationLevel === 1
+          ? 'Votre activité a été validée par le chef de département'
+          : 'Votre activité a été approuvée (validation finale)')
+      : (validationLevel === 1
+          ? 'Votre activité a été rejetée par le chef de département'
+          : 'Votre activité a été rejetée lors de la validation finale');
     await execute(
       `INSERT INTO notifications 
       (utilisateur_id, type, titre, message, activite_id, date_creation)
-      VALUES ($1, 'VALIDATION', 'Activité Validée', 
-              CASE WHEN $2 = 'approved' THEN 'Votre activité a été approuvée' 
-                   ELSE 'Votre activité a été rejetée' END,
-              $3, NOW())`,
-      [activity.utilisateur_id, status, activityId]
+      VALUES ($1, 'VALIDATION', $2, $3, $4, NOW())`,
+      [activity.utilisateur_id, notificationTitle, notificationMessage, activityId]
     );
 
     return NextResponse.json(

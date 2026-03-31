@@ -627,7 +627,7 @@ Pour toute question ou problème :
 
 ## 📄 Licence
 
-© 2024 ESPRIT School of Business - Tous droits réservés.
+© 2026 ESPRIT School of Business - Tous droits réservés.
 
 ## 👥 Contributeurs
 
@@ -637,4 +637,4 @@ Pour toute question ou problème :
 ---
 
 **Version** : 1.0.0  
-**Dernière mise à jour** : Janvier 2024
+**Dernière mise à jour** : Mars 2026

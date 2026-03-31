@@ -16,15 +16,11 @@ export const metadata: Metadata = {
   icons: {
     icon: [
       {
-        url: '/esprit-logo.svg',
-        type: 'image/svg+xml',
-      },
-      {
-        url: '/favicon.ico',
-        type: 'image/x-icon',
+        url: '/logonight.png',
+        type: 'image/png',
       },
     ],
-    apple: '/apple-icon.png',
+    apple: '/logonight.png',
   },
 }
 

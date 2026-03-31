@@ -32,6 +32,7 @@ interface DemoValidationInternal {
   id: string;
   activityId: string;
   validatorId: string;
+  level: 1 | 2;
   status: 'approved' | 'rejected';
   comment?: string;
   validatedAt: string;
@@ -384,7 +385,10 @@ export function createDemoUser(data: {
   };
 }
 
-export function updateDemoUser(userId: string, data: Partial<Pick<DemoUserInternal, 'nom' | 'prenom' | 'departement'>>) {
+export function updateDemoUser(
+  userId: string,
+  data: Partial<Pick<DemoUserInternal, 'nom' | 'prenom' | 'departement' | 'role'>>
+) {
   const store = getStore();
   const user = store.users.find((item) => item.id === userId);
 
@@ -393,6 +397,7 @@ export function updateDemoUser(userId: string, data: Partial<Pick<DemoUserIntern
   if (data.nom !== undefined) user.nom = data.nom;
   if (data.prenom !== undefined) user.prenom = data.prenom;
   if (data.departement !== undefined) user.departement = data.departement;
+  if (data.role !== undefined) user.role = data.role;
 
   return sanitizeUser(user);
 }
@@ -474,11 +479,18 @@ export function deleteDemoActivity(userId: string, activityId: string) {
   return store.activities.length !== initialLength;
 }
 
-export function listDemoValidations(currentUserId: string) {
+export function listDemoValidations(currentUserId: string, role?: string) {
   const store = getStore();
 
+  const allowedRoles = new Set(['chef_departement', 'admin', 'super_admin']);
+  if (!role || !allowedRoles.has(role)) {
+    return [];
+  }
+
+  const expectedStatus = role === 'chef_departement' ? 'submitted' : 'validated';
+
   return store.activities
-    .filter((activity) => activity.status === 'submitted' && activity.userId !== currentUserId)
+    .filter((activity) => activity.status === expectedStatus && activity.userId !== currentUserId)
     .map((activity) => {
       const owner = store.users.find((user) => user.id === activity.userId);
       return {
@@ -504,18 +516,36 @@ export function saveDemoValidation(
   const store = getStore();
   const activity = store.activities.find((item) => item.id === activityId);
 
-  if (!activity) return null;
+  const validator = store.users.find((user) => user.id === validatorId);
+
+  if (!activity || !validator) return null;
+
+  const isChef = validator.role === 'chef_departement';
+  const isAdmin = validator.role === 'admin' || validator.role === 'super_admin';
+
+  if (!isChef && !isAdmin) return null;
+
+  if (activity.userId === validatorId) return null;
+
+  const level: 1 | 2 = isChef ? 1 : 2;
+  const expectedCurrentStatus: ActivityStatus = isChef ? 'submitted' : 'validated';
+  if (activity.status !== expectedCurrentStatus) return null;
 
   const validation: DemoValidationInternal = {
     id: createId('demo-validation'),
     activityId,
     validatorId,
+    level,
     status,
     comment,
     validatedAt: nowIso(),
   };
 
-  activity.status = status === 'approved' ? 'validated' : 'rejected';
+  if (status === 'approved') {
+    activity.status = level === 1 ? 'validated' : 'approved';
+  } else {
+    activity.status = 'rejected';
+  }
   activity.updatedAt = validation.validatedAt;
   store.validations.unshift(validation);
 
@@ -536,7 +566,7 @@ export function createDemoReport(userId: string, academicYearInput?: string) {
   const activities = store.activities.filter(
     (activity) =>
       activity.userId === userId &&
-      activity.status === 'validated' &&
+      (activity.status === 'validated' || activity.status === 'approved') &&
       numericYear(activity.dateDebut) === year
   );
 
@@ -565,7 +595,7 @@ export function getDemoReport(userId: string, reportId: string) {
     .filter(
       (activity) =>
         activity.userId === userId &&
-        activity.status === 'validated' &&
+        (activity.status === 'validated' || activity.status === 'approved') &&
         numericYear(activity.dateDebut) === year
     )
     .map((activity) => mapActivityToClient(activity));
